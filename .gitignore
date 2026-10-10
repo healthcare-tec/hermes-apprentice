@@ -30,3 +30,7 @@ models/
 .vscode/
 .idea/
 .DS_Store
+
+# Arquivo de CI mantido fora do versionamento: o token do GitHub App desta
+# sessão não tem a permissão `workflows`. Adicione pelo site do GitHub.
+.github/workflows/
