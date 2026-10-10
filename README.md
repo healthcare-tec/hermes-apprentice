@@ -209,6 +209,12 @@ O ponto do exercício é justamente comparar:
   cenários foram escritos a partir das mesmas assinaturas que as regras capturam;
 - o **Qwen3‑0.6B** é o piso da escala de modelos locais, rodando em CPU sem GPU.
 
+Duas regras de medição valem para os dois: **uma resposta ilegível conta como erro** (nunca sai do
+denominador) e cada resposta recebe um método de leitura — `strict` (JSON válido de primeira),
+`repaired` (quebras de linha literais dentro das strings, que o JSON padrão recusa), `truncated`
+(objeto cortado no meio pela janela de geração, com o rótulo recuperável) ou `none` (ilegível). Sem
+essa separação, uma falha de *formato* seria apresentada como falha de *julgamento*.
+
 Os números reais de acurácia, F1 por classe, latência e vazão medidos nesta máquina estão no
 [`reports/relatorio-001-padroes-e-loops.md`](reports/relatorio-001-padroes-e-loops.md) e no
 [`artifacts/benchmark-qwen3-0.6b.json`](artifacts/benchmark-qwen3-0.6b.json). O relatório também
@@ -246,6 +252,11 @@ python -m hermes_apprentice all # regenera artefatos e relatório
 Os cenários são determinísticos (sementes fixas de tempo e de argumentos), então a detecção é
 bit-a-bit reprodutível. A bancada do modelo é reprodutível em estrutura e rótulos; a latência
 depende do hardware, e o relatório registra núcleos/RAM/dispositivo/dtype junto dos números.
+
+O workflow de integração contínua está versionado em
+[`docs/ci-workflow.yml`](docs/ci-workflow.yml): ele roda a suíte em três versões de Python, confere
+que os cenários continuam reproduzíveis byte a byte e verifica que o relatório renderiza sem o
+modelo. Para ativá-lo, copie o arquivo para `.github/workflows/ci.yml`.
 
 ## Limites e ética
 

@@ -8,22 +8,32 @@ Duas medições, no mesmo conjunto de janelas rotuladas:
 Comparar as duas é o ponto do exercício: se o modelo pequeno não supera regras
 explícitas, o relatório precisa dizer isso, e não esconder atrás de uma métrica
 agregada favorável.
+
+Regra de medição que este módulo impõe: **uma resposta que não pôde ser lida conta
+como erro**, não como item fora da amostra. Excluir do denominador as janelas em
+que o modelo falhou em formatar é a forma mais fácil de inflar acurácia — e foi
+exatamente o que a primeira versão deste código fazia, silenciosamente, ao usar
+``zip`` sobre listas de rótulos válidos.
 """
 
 from __future__ import annotations
 
 import statistics
 import time
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
 from ..detectors.engine import DetectionEngine
 from .dataset import Window
 
 CLASSES = ("normal", "loop", "failure")
+UNKNOWN = "unknown"
 
 
-def confusion_matrix(y_true: Sequence[str], y_pred: Sequence[str], labels: Sequence[str] = CLASSES) -> List[List[int]]:
+def confusion_matrix(
+    y_true: Sequence[str],
+    y_pred: Sequence[str],
+    labels: Sequence[str] = CLASSES,
+) -> List[List[int]]:
     index = {label: i for i, label in enumerate(labels)}
     matrix = [[0] * len(labels) for _ in labels]
     for truth, pred in zip(y_true, y_pred):
@@ -32,34 +42,57 @@ def confusion_matrix(y_true: Sequence[str], y_pred: Sequence[str], labels: Seque
     return matrix
 
 
-def classification_metrics(y_true: Sequence[str], y_pred: Sequence[str], labels: Sequence[str] = CLASSES) -> Dict[str, Any]:
-    """Acurácia, precisão/revogação/F1 por classe e F1 macro."""
-    matrix = confusion_matrix(y_true, y_pred, labels)
-    total = sum(sum(row) for row in matrix)
-    correct = sum(matrix[i][i] for i in range(len(labels)))
+def classification_metrics(
+    y_true: Sequence[str],
+    y_pred: Sequence[str],
+    labels: Sequence[str] = CLASSES,
+    *,
+    extra_predicted: Sequence[str] = (UNKNOWN,),
+) -> Dict[str, Any]:
+    """Acurácia, precisão/revogação/F1 por classe e F1 macro.
+
+    A matriz de confusão é montada sobre ``labels + extra_predicted``: previsões
+    fora do conjunto de classes (``unknown``) aparecem como coluna própria em vez
+    de serem descartadas. Consequências, todas intencionais:
+
+    * a **acurácia** usa o total de janelas, então ``unknown`` derruba o número;
+    * a **revogação** de uma classe conta ``unknown`` como falso negativo, porque
+      deixar de reconhecer a falha é o erro que importa operacionalmente;
+    * a **precisão** não é afetada por ``unknown``, já que a coluna não é a classe.
+    """
+    full_labels = list(labels) + [c for c in extra_predicted if c not in labels]
+    matrix = confusion_matrix(y_true, y_pred, full_labels)
+    class_count = len(labels)
+    total = len(y_true)
+    correct = sum(matrix[i][i] for i in range(class_count))
+    parsed = sum(1 for pred in y_pred if pred in set(labels))
+
     per_class: Dict[str, Dict[str, float]] = {}
     for i, label in enumerate(labels):
         tp = matrix[i][i]
-        fp = sum(matrix[r][i] for r in range(len(labels)) if r != i)
-        fn = sum(matrix[i][c] for c in range(len(labels)) if c != i)
+        fp = sum(matrix[r][i] for r in range(len(full_labels)) if r != i)
+        fn = sum(matrix[i][c] for c in range(len(full_labels)) if c != i)
         precision = tp / (tp + fp) if tp + fp else 0.0
         recall = tp / (tp + fn) if tp + fn else 0.0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-        support = sum(matrix[i])
         per_class[label] = {
             "precision": round(precision, 3),
             "recall": round(recall, 3),
             "f1": round(f1, 3),
-            "support": support,
+            "support": sum(matrix[i]),
         }
-    macro_f1 = sum(v["f1"] for v in per_class.values()) / len(labels)
+
+    macro_f1 = sum(v["f1"] for v in per_class.values()) / len(labels) if labels else 0.0
     return {
         "accuracy": round(correct / total, 3) if total else 0.0,
+        "accuracy_on_parsed": round(correct / parsed, 3) if parsed else 0.0,
         "macro_f1": round(macro_f1, 3),
         "per_class": per_class,
         "confusion_matrix": matrix,
+        "confusion_labels": full_labels,
         "labels": list(labels),
         "n": total,
+        "n_parsed": parsed,
     }
 
 
@@ -97,8 +130,13 @@ def run_baseline(windows: Sequence[Window]) -> List[Dict[str, Any]]:
     return results
 
 
-def run_model(classifier: Any, windows: Sequence[Window], *, max_events: int = 16,
-              progress: Optional[Any] = None) -> List[Dict[str, Any]]:
+def run_model(
+    classifier: Any,
+    windows: Sequence[Window],
+    *,
+    max_events: int = 16,
+    progress: Optional[Any] = None,
+) -> List[Dict[str, Any]]:
     """Executa o classificador em cada janela, medindo latência e tokens."""
     results: List[Dict[str, Any]] = []
     for position, window in enumerate(windows, start=1):
@@ -113,9 +151,16 @@ def summarize_model(results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     latencies = [r["latency_s"] for r in results]
     tps = [r["tokens_per_second"] for r in results if r.get("tokens_per_second")]
     metrics = classification_metrics([r["truth"] for r in results], [r["label"] for r in results])
+    methods = [r.get("parse_method", "none") for r in results]
     return {
         **metrics,
-        "parse_failures": sum(1 for r in results if not r.get("parse_ok")),
+        "parse_methods": {
+            "strict": methods.count("strict"),
+            "repaired": methods.count("repaired"),
+            "truncated": methods.count("truncated"),
+            "none": methods.count("none"),
+        },
+        "parse_failures": methods.count("none"),
         "latency_s": {
             "mean": round(statistics.mean(latencies), 3) if latencies else 0.0,
             "median": round(statistics.median(latencies), 3) if latencies else 0.0,
@@ -167,6 +212,7 @@ def error_analysis(model_results: Sequence[Dict[str, Any]], limit: int = 12) -> 
             "loop_type": r.get("loop_type"),
             "reason": r.get("reason"),
             "parse_ok": r.get("parse_ok"),
+            "parse_method": r.get("parse_method"),
         }
         for r in errors[:limit]
     ]

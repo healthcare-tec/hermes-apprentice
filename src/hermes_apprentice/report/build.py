@@ -105,7 +105,7 @@ def _charts(detection: Dict[str, Any], benchmark: Dict[str, Any], out_dir: Path)
 
     # 3) Matriz de confusão do modelo
     matrix = model.get("confusion_matrix")
-    labels = model.get("labels")
+    labels = model.get("confusion_labels") or model.get("labels")
     if matrix and labels:
         biggest = max((max(row) for row in matrix), default=1) or 1
         fig, ax = plt.subplots(figsize=(5, 4.2))
@@ -160,14 +160,27 @@ def _model_diagnostics(benchmark: Dict[str, Any]) -> List[str]:
     notes: List[str] = []
 
     parse_failures = model.get("parse_failures") or 0
+    methods = model.get("parse_methods") or {}
+    strict = methods.get("strict", model.get("n_parsed", 0))
+    repaired = methods.get("repaired", 0)
+    truncated = methods.get("truncated", 0)
     share = 100.0 * parse_failures / total
-    notes.append(
-        f"- **Falha de formato:** {parse_failures} de {total} janelas ({share:.0f}%) não produziram JSON "
-        "válido e foram contadas como `unknown`. Isso é erro de *formatação*, não de julgamento: o modelo "
-        "pode ter identificado o padrão e descrito no texto livre, mas não entregou o contrato pedido. "
-        "Um pós-processamento tolerante, ou few-shot com um exemplo exato, ataca exatamente esse ponto "
-        "antes de qualquer troca de modelo."
+    resumo_formato = (
+        f"{strict} de {total} janelas saíram como JSON estrito, {repaired} precisaram de reparo (quebras de "
+        f"linha literais dentro das strings, que o JSON padrão recusa) e {truncated} foram recuperadas de um "
+        f"objeto cortado no meio pela janela de geração."
     )
+    if parse_failures:
+        notes.append(
+            f"- **Formato da resposta:** {resumo_formato} Outras {parse_failures} ({share:.0f}%) continuaram "
+            "ilegíveis e contam como `unknown`. Aqui o gargalo é de **formato**, não de julgamento: um "
+            "parser tolerante ou um exemplo exato de JSON no prompt rende mais que trocar de modelo."
+        )
+    else:
+        notes.append(
+            f"- **Formato da resposta:** {resumo_formato} Nenhuma janela ficou ilegível, então os números "
+            "abaixo medem **julgamento**, não capacidade de obedecer ao formato pedido."
+        )
 
     matrix = model.get("confusion_matrix") or []
     labels = model.get("labels") or []
@@ -186,8 +199,9 @@ def _model_diagnostics(benchmark: Dict[str, Any]) -> List[str]:
         ]
         worst = min(recalls, key=lambda item: item[1])
         notes.append(
-            f"- **Pior revogação (recall):** `{worst[0]}` = {worst[1]}. "
-            "Uma revogação baixa significa que a classe *existe* e passa despercebida."
+            f"- **Menor recall:** `{worst[0]}` = {worst[1]}. Recall baixo significa que a classe *existe* "
+            "na janela e passa despercebida — operacionalmente é o pior tipo de erro, porque a falha "
+            "segue adiante sem alarme."
         )
     return notes
 
@@ -232,9 +246,10 @@ def render_markdown(
     lines.append("")
     if model:
         lines.append(
-            f"O modelo local **Qwen3-0.6B** (CPU, sem GPU) alcançou acurácia `{model.get('accuracy')}` e "
-            f"F1 macro `{model.get('macro_f1')}`, contra `{baseline.get('accuracy')}` / "
-            f"`{baseline.get('macro_f1')}` dos detectores determinísticos. "
+            f"O modelo local **Qwen3-0.6B** (CPU, sem GPU) alcançou acurácia `{model.get('accuracy')}` sobre "
+            f"**todas** as {model.get('n')} janelas — respostas ilegíveis contam como erro, sem serem "
+            f"descartadas do denominador — e F1 macro `{model.get('macro_f1')}`, contra "
+            f"`{baseline.get('accuracy')}` / `{baseline.get('macro_f1')}` dos detectores determinísticos. "
             "A leitura desses números — e o que fazer com eles — está na seção "
             "*Desempenho inicial do Qwen3-0.6B*."
         )
@@ -349,7 +364,8 @@ def render_markdown(
             _table(
                 ["Métrica", "Detectores determinísticos", "Qwen3-0.6B"],
                 [
-                    ["Acurácia", baseline.get("accuracy"), model.get("accuracy")],
+                    ["Acurácia (todas as janelas)", baseline.get("accuracy"), model.get("accuracy")],
+                    ["Acurácia (só respostas legíveis)", baseline.get("accuracy"), model.get("accuracy_on_parsed")],
                     ["F1 macro", baseline.get("macro_f1"), model.get("macro_f1")],
                     ["F1 `normal`", (baseline.get("per_class") or {}).get("normal", {}).get("f1"),
                      (model.get("per_class") or {}).get("normal", {}).get("f1")],
@@ -359,7 +375,7 @@ def render_markdown(
                      (model.get("per_class") or {}).get("failure", {}).get("f1")],
                     ["Latência média/janela (s)", (baseline.get("latency_s") or {}).get("mean"),
                      (model.get("latency_s") or {}).get("mean")],
-                    ["JSON inválido", "—", model.get("parse_failures")],
+                    ["Respostas ilegíveis", "—", model.get("parse_failures")],
                 ],
             )
         )
@@ -376,11 +392,13 @@ def render_markdown(
             f"com **{model.get('prompt_tokens_mean')}** tokens de prompt por janela."
         )
         if hardware:
+            ram = f"{hardware.get('ram_gb')} GB de RAM disponíveis"
+            if hardware.get("ram_cgroup_gb") and hardware.get("ram_host_gb") != hardware.get("ram_gb"):
+                ram += f" (limite de contêiner; {hardware.get('ram_host_gb')} GB no host)"
             lines.append(
-                f"- Ambiente: {hardware.get('cpu_cores')} núcleos, {hardware.get('ram_gb')} GB de RAM disponíveis "
-                f"({hardware.get('ram_host_gb')} GB no host), dispositivo `{hardware.get('device')}`, "
-                f"dtype `{hardware.get('dtype')}`, carga dos pesos {hardware.get('load_seconds')} s, "
-                f"sem GPU."
+                f"- Ambiente: {hardware.get('cpu_cores')} núcleos, {ram}, "
+                f"dispositivo `{hardware.get('device')}`, dtype `{hardware.get('dtype')}`, "
+                f"carga dos pesos {hardware.get('load_seconds')} s, sem GPU."
             )
         lines.append("")
         for note in _model_diagnostics(benchmark):

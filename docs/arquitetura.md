@@ -96,3 +96,5 @@ diferença. Os gráficos são PNGs gerados por matplotlib em `reports/assets/`.
 | cenários com zona de correção | cenários só de falha | a pergunta útil não é "travou?", é "o que destravou?" |
 | `hermes --version` com `HERMES_HOME` temporário | apontar para o home real | o CLI grava cache no home apontado; isolar mantém a promessa de não deixar rastro |
 | leitura `immutable=1` opcional | usar `mode=ro` sempre | banco WAL em `mode=ro` faz o SQLite criar sidecars `-shm`/`-wal`; `immutable` evita, ao custo de exigir harness parado |
+| resposta ilegível conta como erro | excluir `unknown` do denominador | a primeira versão fazia isso sem avisar e inflava a acurácia de 0,47 para 0,70; o erro foi corrigido e virou teste |
+| distinguir `strict` / `repaired` / `none` | um único booleano `parse_ok` | falha de formato e falha de julgamento pedem ações diferentes: um parser tolerante resolve a primeira, trocar de modelo resolveria a segunda |

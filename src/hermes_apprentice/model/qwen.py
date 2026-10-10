@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
 from ..schema import Event
@@ -24,6 +24,71 @@ from .prompts import LABELS, LOOP_TYPES, build_messages
 DEFAULT_MODEL_ID = "Qwen/Qwen3-0.6B"
 
 _JSON_RE = re.compile(r"\{.*?\}", re.DOTALL)
+_FENCE_RE = re.compile(r"```(?:json)?(.*?)```", re.DOTALL)
+
+
+def balanced_objects(text: str) -> List[str]:
+    """Todos os trechos ``{...}`` balanceados, do mais longo para o mais curto.
+
+    Varredura por contagem de chaves, e não por expressão regular: regex não dão
+    conta de chaves dentro de strings (``{"reason": "usei {} em template"}``).
+    """
+    objects: List[str] = []
+    depth = 0
+    start = -1
+    in_string = False
+    escaped = False
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+        elif char == "}":
+            if depth > 0:
+                depth -= 1
+                if depth == 0 and start >= 0:
+                    objects.append(text[start : index + 1])
+    return sorted(objects, key=len, reverse=True)
+
+
+
+def salvage_truncated(text: str) -> Optional[Dict[str, Any]]:
+    """Recupera um objeto JSON **cortado no meio** pela janela de geração.
+
+    Foi o modo de falha dominante do Qwen3-0.6B na primeira medição: com uma
+    janela de geração curta, o modelo escreve ``label``, ``loop_type`` e
+    ``confidence`` corretamente e é cortado no meio do campo ``reason``, deixando
+    o objeto sem fechar. O rótulo — que é o que se classifica — está lá.
+
+    A recuperação corta o fragmento na última vírgula e fecha a chave. O resultado
+    recebe o método ``truncated``, nunca ``strict``: quem lê as métricas precisa
+    saber que a resposta veio incompleta.
+    """
+    start = text.find("{")
+    if start < 0:
+        return None
+    fragment = text[start:].rstrip()
+    attempts = [fragment + '"}', fragment + "}"]
+    for position in reversed([i for i, char in enumerate(fragment) if char == ","]):
+        attempts.append(fragment[:position] + '"}')
+        attempts.append(fragment[:position] + "}")
+    for candidate in attempts:
+        try:
+            data = json.loads(candidate, strict=False)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and "label" in data:
+            return data
+    return None
 
 
 @dataclass
@@ -39,6 +104,8 @@ class Prediction:
     prompt_tokens: int = 0
     generated_tokens: int = 0
     parse_ok: bool = False
+    #: ``strict`` | ``repaired`` | ``none`` — ver :func:`parse_prediction`.
+    parse_method: str = "none"
 
     @property
     def tokens_per_second(self) -> float:
@@ -55,25 +122,67 @@ class Prediction:
             "generated_tokens": self.generated_tokens,
             "tokens_per_second": round(self.tokens_per_second, 1),
             "parse_ok": self.parse_ok,
+            "parse_method": self.parse_method,
             "raw": self.raw[:400],
         }
 
 
 def parse_prediction(text: str) -> Dict[str, Any]:
-    """Extrai o JSON da resposta, tolerando cercas de código e texto ao redor."""
-    match = _JSON_RE.search(text or "")
-    if not match:
-        return {"parse_ok": False}
-    try:
-        data = json.loads(match.group(0))
-    except json.JSONDecodeError:
-        # Segunda tentativa: normaliza aspas simples comuns em saídas curtas.
+    """Extrai o JSON da resposta e informa **como** conseguiu.
+
+    ``parse_method`` é o campo que importa para a honestidade do relatório:
+
+    * ``strict``   — ``json.loads`` direto sobre o objeto balanceado;
+    * ``repaired`` — só passou depois de ``strict=False`` (o modelo insere
+      quebras de linha literais dentro das strings, o que o JSON padrão recusa)
+      ou da normalização de aspas simples;
+    * ``none``     — nenhum objeto utilizável; a janela conta como ``unknown``.
+
+    Sem essa distinção, uma falha de *formato* seria relatada como falha de
+    *julgamento* — exatamente o erro que este projeto existe para evitar.
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return {"parse_ok": False, "parse_method": "none"}
+
+    candidates: List[str] = []
+    for fence in _FENCE_RE.findall(raw):
+        candidates.extend(balanced_objects(fence.strip()))
+    candidates.extend(balanced_objects(raw))
+    if not candidates:
+        match = _JSON_RE.search(raw)
+        if match:
+            candidates.append(match.group(0))
+
+    data: Optional[Dict[str, Any]] = None
+    method = "none"
+    for candidate in candidates:
         try:
-            data = json.loads(match.group(0).replace("'", '"'))
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict) and "label" in parsed:
+                data, method = parsed, "strict"
+                break
         except json.JSONDecodeError:
-            return {"parse_ok": False}
-    if not isinstance(data, dict):
-        return {"parse_ok": False}
+            pass
+        for tolerant in (candidate, candidate.replace("'", '"')):
+            try:
+                parsed = json.loads(tolerant, strict=False)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict) and "label" in parsed:
+                data, method = parsed, "repaired"
+                break
+        if data is not None:
+            break
+
+    if data is None:
+        salvaged = salvage_truncated(raw)
+        if salvaged is not None:
+            data, method = salvaged, "truncated"
+
+    if data is None:
+        return {"parse_ok": False, "parse_method": "none"}
+
     label = str(data.get("label", "unknown")).strip().lower()
     if label not in LABELS:
         label = "unknown"
@@ -91,6 +200,7 @@ def parse_prediction(text: str) -> Dict[str, Any]:
         "confidence": confidence,
         "reason": str(data.get("reason", ""))[:200],
         "parse_ok": True,
+        "parse_method": method,
     }
 
 
@@ -102,7 +212,10 @@ class QwenClassifier:
         model_id: str = DEFAULT_MODEL_ID,
         *,
         device: str = "cpu",
-        max_new_tokens: int = 48,
+        # 48 tokens cortavam o objeto JSON no meio do campo ``reason`` em cerca de
+        # um terço das janelas. Como a geração para no EOS, elevar o teto não
+        # encarece as respostas que já terminavam sozinhas.
+        max_new_tokens: int = 96,
         enable_thinking: bool = False,
         threads: Optional[int] = None,
         local_files_only: bool = False,
@@ -183,12 +296,11 @@ class QwenClassifier:
             prompt_tokens=int(inputs["input_ids"].shape[-1]),
             generated_tokens=int(generated.shape[-1]),
             parse_ok=bool(parsed.get("parse_ok")),
+            parse_method=str(parsed.get("parse_method", "none")),
         )
 
     def smoke_test(self) -> Dict[str, Any]:
         """Teste mínimo de sanidade: uma janela com loop óbvio deve sair como ``loop``."""
-        from ..schema import Event
-
         events = [
             Event(type="tool_call_start", tool="read_file", args_digest="aaaa1111"),
             Event(type="tool_call_end", tool="read_file", result_digest="bbbb2222", status="ok"),
