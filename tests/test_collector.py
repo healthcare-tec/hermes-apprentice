@@ -141,3 +141,68 @@ def test_missing_home_does_not_crash(tmp_path):
     pipeline = CollectorPipeline(hermes_home=str(tmp_path / "inexistente"))
     assert pipeline.run() == []
     assert collect_from("state_db", hermes_home=str(tmp_path / "inexistente")) == []
+
+
+def test_immutable_read_creates_no_sidecar(fixture_home: Path, tmp_path: Path):
+    """Ler com ``immutable=1`` não pode criar `-shm`/`-wal` ao lado do banco."""
+    import shutil
+
+    target = tmp_path / "state.db"
+    shutil.copy2(fixture_home / "state.db", target)
+    before = sorted(p.name for p in tmp_path.iterdir())
+
+    events = list(state_db.iter_events(target, immutable=True))
+    assert events
+
+    after = sorted(p.name for p in tmp_path.iterdir())
+    assert after == before == ["state.db"]
+    assert state_db.sidecar_paths(target) == []
+
+
+def test_immutable_still_refuses_writes(fixture_home: Path):
+    """A garantia de somente leitura não pode depender de ``PRAGMA query_only``."""
+    result = state_db.assert_readonly(fixture_home / "state.db", immutable=True)
+    assert result["write_blocked"] is True
+
+
+def test_reader_reports_sidecars_instead_of_hiding_them(fixture_home: Path):
+    """O efeito colateral do SQLite é reportado, e o arquivo não muda.
+
+    O que importa não é *se* a biblioteca cria sidecars, e sim que: (a) o
+    ``state.db`` em si fique byte a byte idêntico, e (b) qualquer sidecar criado
+    seja visível para quem audita, via ``sidecar_paths``.
+    """
+    import hashlib
+    import shutil
+
+    target = fixture_home / "state.db"
+    before_hash = hashlib.sha256(target.read_bytes()).hexdigest()
+
+    conn = state_db.connect_readonly(target)
+    try:
+        mode = str(conn.execute("PRAGMA journal_mode").fetchone()[0]).lower()
+        conn.execute("SELECT COUNT(*) FROM sessions").fetchone()
+    finally:
+        conn.close()
+
+    after_hash = hashlib.sha256(target.read_bytes()).hexdigest()
+    assert after_hash == before_hash, "o modo=ro alterou o arquivo do banco"
+
+    # Qualquer sidecar presente precisa ser reportado — nada é escondido.
+    reported = state_db.sidecar_paths(target)
+    for suffix in ("-shm", "-wal"):
+        assert (str(target) + suffix in reported) == Path(str(target) + suffix).exists()
+    if mode == "wal":
+        assert reported, "banco WAL lido em mode=ro deveria expor sidecars"
+
+
+def test_pipeline_immutable_flag_is_forwarded(tmp_path, fixture_home: Path):
+    import shutil
+
+    home = tmp_path / "home"
+    home.mkdir()
+    shutil.copy2(fixture_home / "state.db", home / "state.db")
+    pipeline = CollectorPipeline(hermes_home=str(home), immutable=True)
+    assert pipeline.run()
+    assert (home / "state.db").exists()
+    assert not (home / "state.db-shm").exists()

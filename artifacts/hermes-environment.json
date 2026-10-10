@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "tool_version": "0.1.0",
-  "generated_at": "2026-10-10T01:38:43+00:00",
+  "generated_at": "2026-10-10T01:41:26+00:00",
   "host": {
     "platform": "Linux-6.18.38+-x86_64-with-glibc2.39",
     "python": "3.12.3",
@@ -24,6 +24,7 @@
       "binary": "/home/ubuntu/hermes-lab/venv/bin/hermes",
       "available": true,
       "invoked": true,
+      "hermes_home_used": "temporary_directory",
       "version_raw": "Hermes Agent v0.19.0 (2026.7.20)\nInstall directory: /home/ubuntu/hermes-lab/venv/lib/python3.12/site-packages\nInstall method: pip\nPython: 3.12.3\nOpenAI SDK: 2.24.0\nUp to date",
       "version_ok": true
     },
@@ -74,7 +75,7 @@
     "path": "examples/hermes-home-fixture/state.db",
     "exists": true,
     "size_bytes": 196608,
-    "wal_present": true,
+    "wal_present": false,
     "tables": [
       "async_delegations",
       "compression_locks",
@@ -98,7 +99,7 @@
       "sqlite_sequence",
       "state_meta"
     ],
-    "journal_mode": "wal",
+    "journal_mode": "delete",
     "counts": {
       "sessions": 1,
       "messages": 11,
@@ -108,7 +109,9 @@
     "schema_version_row": [
       22
     ],
-    "read_only": true
+    "read_only": true,
+    "immutable": true,
+    "sidecars": []
   },
   "logs": {
     "dir": "examples/hermes-home-fixture/logs",
@@ -137,7 +140,7 @@
       "stars": 252296,
       "license": "MIT",
       "default_branch": "main",
-      "pushed_at": "2026-10-10T01:24:41Z"
+      "pushed_at": "2026-10-10T01:39:24Z"
     },
     "github_latest_release": {
       "tag": "v0.21.6",
@@ -145,6 +148,7 @@
     }
   },
   "notes": [
+    "A chamada `hermes --version` foi executada com HERMES_HOME temporário: o CLI do harness grava cache no HERMES_HOME, e apontá-lo para o diretório real violaria a garantia de somente observação.",
     "Divergência de versões: pacote PyPI 0.19.0 x última release do GitHub v0.21.6."
   ]
 }

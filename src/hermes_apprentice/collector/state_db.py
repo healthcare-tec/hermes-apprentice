@@ -10,6 +10,15 @@ Garantias de segurança deste módulo:
   colunas existentes. Colunas novas ou renomeadas pelo harness não quebram a
   coleta — o evento correspondente sai com os campos disponíveis em ``meta``.
 
+Sobre efeitos colaterais do SQLite: abrir um banco em modo WAL **somente leitura**
+faz a própria biblioteca criar os arquivos sidecar ``-shm``/``-wal``, porque ela
+precisa do índice de memória compartilhada. Nenhum byte do ``state.db`` é alterado,
+mas dois arquivos novos aparecem no diretório do harness. Para leitura sem
+**nenhum** arquivo novo, use ``immutable=True`` (URI ``immutable=1``): o SQLite
+trata o arquivo como imutável, não cria sidecar e continua recusando escrita.
+Use ``immutable=True`` apenas quando o harness não estiver em execução — com o
+agente escrevendo, a visão imutável pode ficar desatualizada.
+
 Como o banco é compartilhado entre gateway, CLI e subagentes (WAL, um escritor
 por vez), a leitura é feita com ``timeout`` curto e reprocessamento incremental
 por ``rowid``.
@@ -26,13 +35,26 @@ from ..redact import redact_text
 from ..schema import Event, digest
 
 
-def connect_readonly(db_path: str | Path, *, timeout: float = 5.0) -> sqlite3.Connection:
-    """Abre ``state.db`` garantidamente em modo somente leitura."""
+def connect_readonly(
+    db_path: str | Path,
+    *,
+    timeout: float = 5.0,
+    immutable: bool = False,
+) -> sqlite3.Connection:
+    """Abre ``state.db`` garantidamente em modo somente leitura.
+
+    ``immutable=True`` acrescenta ``immutable=1`` à URI: nenhum arquivo sidecar é
+    criado e nenhum lock é adquirido. Só é seguro quando o banco não está sendo
+    alterado por outro processo.
+    """
     path = Path(db_path)
     uri = f"file:{path.as_posix()}?mode=ro"
+    if immutable:
+        uri += "&immutable=1"
     conn = sqlite3.connect(uri, uri=True, timeout=timeout)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA query_only = ON")
+    if not immutable:
+        conn.execute("PRAGMA query_only = ON")
     return conn
 
 
@@ -232,9 +254,10 @@ def iter_events(
     *,
     since_row_id: int = 0,
     limit: int = 5000,
+    immutable: bool = False,
 ) -> Iterator[Event]:
     """Ponto de entrada: emite todos os eventos disponíveis, ordenados por ``rowid``."""
-    conn = connect_readonly(db_path)
+    conn = connect_readonly(db_path, immutable=immutable)
     try:
         yield from iter_session_events(conn, limit=min(limit, 2000))
         yield from iter_message_events(conn, since_row_id=since_row_id, limit=limit)
@@ -242,9 +265,9 @@ def iter_events(
         conn.close()
 
 
-def max_row_id(db_path: str | Path) -> int:
+def max_row_id(db_path: str | Path, *, immutable: bool = False) -> int:
     """Maior ``rowid`` já processado — usado para coleta incremental."""
-    conn = connect_readonly(db_path)
+    conn = connect_readonly(db_path, immutable=immutable)
     try:
         if "messages" not in list_tables(conn):
             return 0
@@ -254,9 +277,17 @@ def max_row_id(db_path: str | Path) -> int:
         conn.close()
 
 
-def assert_readonly(db_path: str | Path) -> Dict[str, Any]:
+def sidecar_paths(db_path: str | Path) -> List[str]:
+    """Sidecars ``-shm``/``-wal`` presentes ao lado do banco (podem ser criados na leitura)."""
+    path = Path(db_path)
+    return [str(path.with_name(path.name + suffix)) for suffix in ("-shm", "-wal") if path.with_name(
+        path.name + suffix
+    ).exists()]
+
+
+def assert_readonly(db_path: str | Path, *, immutable: bool = False) -> Dict[str, Any]:
     """Autoteste: prova que a conexão recusa escrita. Usado nos testes e no relatório."""
-    conn = connect_readonly(db_path)
+    conn = connect_readonly(db_path, immutable=immutable)
     result: Dict[str, Any] = {"path": str(db_path)}
     try:
         try:

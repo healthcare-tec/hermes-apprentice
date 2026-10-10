@@ -133,6 +133,20 @@ def main() -> int:
         print("[!] state.db não foi criado; o Hermes instalado pode usar outro caminho", file=sys.stderr)
         return 1
 
+    # O banco roda em modo WAL. Consolidamos o WAL no arquivo principal para que
+    # o fixture seja autocontido: sem isso, parte das linhas viveria em
+    # ``state.db-wal`` e quem copiasse só o ``state.db`` perderia dados.
+    import sqlite3
+
+    connection = sqlite3.connect(state_db)
+    try:
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        result = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        rows = connection.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+    finally:
+        connection.close()
+    print(f"[fixture] integrity_check={result}, mensagens={rows}")
+
     if out.exists():
         if not args.force:
             print(f"[!] {out} já existe; use --force para sobrescrever", file=sys.stderr)
@@ -140,8 +154,8 @@ def main() -> int:
         shutil.rmtree(out)
     out.mkdir(parents=True)
 
-    # Copiamos apenas o que é seguro versionar: nada de `.env`, `auth.json` nem
-    # caches de atualização.
+    # Copiamos apenas o que é seguro versionar: nada de `.env`, `auth.json`,
+    # `.update_check` nem arquivos `-wal`/`-shm` (já consolidados acima).
     (out / "logs").mkdir(exist_ok=True)
     for relative in ("config.yaml", "SOUL.md", "state.db"):
         source = stub / relative

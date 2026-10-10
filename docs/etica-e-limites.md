@@ -30,6 +30,26 @@ segurança para produção — dados de pesquisa ainda merecem revisão humana a
 | Comandar o agente | a Runs API é consumida só com `GET`; não há chamada a `/steer` ou `/approval` |
 | Deixar rastros em arquivos do Hermes | offsets de leitura vivem apenas na memória do processo |
 
+### Efeitos colaterais que não são nossos, e como foram tratados
+
+Duas fontes de escrita apareceram durante o desenvolvimento — nenhuma delas é nossa, e ambas são
+tratadas explicitamente em vez de ignoradas:
+
+1. **Cache do próprio CLI.** `hermes --version` grava um arquivo `.update_check` no `HERMES_HOME`
+   apontado. Como a saída de versão vem dos metadados do pacote (não da configuração), a sonda
+   executa o CLI com um `HERMES_HOME` **temporário**: o diretório do usuário não recebe nada, e o
+   relatório registra que a chamada foi isolada (`cli.hermes_home_used`).
+
+2. **Sidecars do SQLite.** Abrir um banco em modo WAL somente leitura faz a **biblioteca** criar
+   `-shm`/`-wal` ao lado do `state.db`, porque ela precisa do índice de memória compartilhada.
+   Nenhum byte do banco é alterado — mas dois arquivos novos aparecem no diretório do harness. Para
+   leitura sem nenhum arquivo novo, o módulo aceita `immutable=1` (exposto como `--immutable`);
+   `tests/test_collector.py::test_immutable_read_creates_no_sidecar` prova a ausência de sidecar e
+   `test_immutable_still_refuses_writes` prova que a escrita continua recusada nesse modo.
+
+O modo `--immutable` só é seguro quando o harness não está em execução: com o agente escrevendo, a
+visão imutável pode ficar desatualizada, e aí `mode=ro` é a escolha correta.
+
 Verificação executável (`assert_readonly`, usada nos testes):
 
 ```python

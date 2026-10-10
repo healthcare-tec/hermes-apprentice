@@ -25,6 +25,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -178,8 +179,14 @@ def read_config(config_path: Path) -> Dict[str, Any]:
     return info
 
 
-def inspect_state_db(db_path: Path) -> Dict[str, Any]:
-    """Inspeciona ``state.db`` com conexão **read-only** (``mode=ro`` + query_only)."""
+def inspect_state_db(db_path: Path, *, immutable: bool = True) -> Dict[str, Any]:
+    """Inspeciona ``state.db`` sem escrever nada.
+
+    Usa ``immutable=1`` por padrão porque a sonda só precisa de contagens e de
+    nomes de tabela: assim **nenhum** arquivo sidecar (``-shm``/``-wal``) é criado
+    no diretório do usuário. Uma visão levemente desatualizada é um preço
+    aceitável por não deixar rastro.
+    """
     info: Dict[str, Any] = {"path": str(db_path), "exists": db_path.exists()}
     if not db_path.exists():
         info["reason"] = "state.db ausente (nenhuma sessão persistida ainda)"
@@ -188,9 +195,12 @@ def inspect_state_db(db_path: Path) -> Dict[str, Any]:
     info["wal_present"] = db_path.with_name(db_path.name + "-wal").exists()
     try:
         uri = f"file:{db_path.as_posix()}?mode=ro"
+        if immutable:
+            uri += "&immutable=1"
         conn = sqlite3.connect(uri, uri=True, timeout=5)
         try:
-            conn.execute("PRAGMA query_only = ON")
+            if not immutable:
+                conn.execute("PRAGMA query_only = ON")
             tables = [
                 row[0]
                 for row in conn.execute(
@@ -220,6 +230,10 @@ def inspect_state_db(db_path: Path) -> Dict[str, Any]:
     except sqlite3.DatabaseError as exc:
         info["reason"] = f"não foi possível abrir em modo somente leitura: {exc}"
         info["read_only"] = True
+    info["immutable"] = immutable
+    info["sidecars"] = sorted(
+        path.name for path in (db_path.with_name(db_path.name + s) for s in ("-shm", "-wal")) if path.exists()
+    )
     return info
 
 
@@ -290,14 +304,27 @@ def probe_environment(
     binary = hermes_bin or shutil.which("hermes")
     cli: Dict[str, Any] = {"binary": binary, "available": bool(binary), "invoked": False}
     if binary and invoke_cli:
-        env = dict(os.environ)
-        env["HERMES_HOME"] = str(home)  # nunca deixa o CLI cair em outro perfil
-        version = _run([binary, "--version"], env=env)
+        # O CLI do Hermes grava arquivos de cache no HERMES_HOME sempre que roda
+        # (`.update_check`, e às vezes `-wal`/`-shm` ao abrir o banco). Executá-lo
+        # contra a instalação real quebraria a promessa de somente observação.
+        # Como a saída de `--version` vem dos metadados do pacote — não da
+        # configuração —, apontamos HERMES_HOME para um diretório temporário: o
+        # versionamento é obtido sem tocar em nada do usuário.
+        with tempfile.TemporaryDirectory(prefix="hermes-apprentice-probe-") as sandbox_home:
+            env = dict(os.environ)
+            env["HERMES_HOME"] = sandbox_home
+            version = _run([binary, "--version"], env=env)
         cli["invoked"] = True
+        cli["hermes_home_used"] = "temporary_directory"
         cli["version_raw"] = redact_text(version["stdout"] or version["stderr"], max_len=300)
         cli["version_ok"] = version["ok"]
         if not version["ok"]:
             notes.append("`hermes --version` falhou; a versão foi inferida pelos metadados do pacote.")
+        notes.append(
+            "A chamada `hermes --version` foi executada com HERMES_HOME temporário: o CLI do harness "
+            "grava cache no HERMES_HOME, e apontá-lo para o diretório real violaria a garantia de "
+            "somente observação."
+        )
     elif binary:
         notes.append("Chamada ao CLI desativada (invoke_cli=False); versão não coletada em execução.")
 

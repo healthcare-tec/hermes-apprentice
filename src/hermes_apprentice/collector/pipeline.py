@@ -36,6 +36,9 @@ class CollectorPipeline:
     fixture_path: Optional[str] = None
     since_row_id: int = 0
     limit: int = 5000
+    #: Leitura imutável do SQLite: não cria sidecars ``-shm``/``-wal``.
+    #: Só use quando o harness não estiver em execução.
+    immutable: bool = False
     sources_used: List[str] = field(default_factory=list)
 
     # -- fontes individuais ------------------------------------------------
@@ -44,7 +47,11 @@ class CollectorPipeline:
         if not path.exists():
             return []
         self.sources_used.append("state_db")
-        return list(state_db_source.iter_events(path, since_row_id=self.since_row_id, limit=self.limit))
+        return list(
+            state_db_source.iter_events(
+                path, since_row_id=self.since_row_id, limit=self.limit, immutable=self.immutable
+            )
+        )
 
     def from_logs(self) -> List[Event]:
         directory = Path(self.logs_dir or Path(self.hermes_home or "~/.hermes").expanduser() / "logs")

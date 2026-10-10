@@ -76,6 +76,7 @@ def cmd_collect(args: argparse.Namespace) -> int:
         spool_dir=args.spool,
         fixture_path=args.fixture,
         limit=args.limit,
+        immutable=args.immutable,
     )
     events = pipeline.run(base_url=args.base_url, run_id=args.run_id, api_key=args.api_key)
     count = dump_ndjson(iter(events), args.out)
@@ -260,6 +261,11 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--run-id")
     c.add_argument("--api-key")
     c.add_argument("--limit", type=int, default=5000)
+    c.add_argument(
+        "--immutable",
+        action="store_true",
+        help="leitura SQLite imutável: não cria sidecars -shm/-wal (use com o harness parado)",
+    )
     c.add_argument("--out", default=DEFAULT_PATHS["events"])
     c.add_argument("--allow-empty", action="store_true")
     c.set_defaults(func=cmd_collect)

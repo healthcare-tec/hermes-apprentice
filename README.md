@@ -187,9 +187,18 @@ Saída verificada nesta máquina (Hermes v0.19.0):
 | Nunca comanda o agente | `runs_api` só faz `GET`; não existe chamada a `/steer` ou `/approval` | revisão de [`runs_api.py`](src/hermes_apprentice/collector/runs_api.py) |
 | Não persiste offsets em arquivos do Hermes | os offsets vivem apenas na memória do processo | [`logs.py`](src/hermes_apprentice/collector/logs.py) |
 | Não vaza segredos | toda string passa por `redact()` antes de sair do processo | `tests/test_redact.py` |
+| Não deixa arquivo novo no `HERMES_HOME` | o CLI é executado com `HERMES_HOME` temporário; a leitura do banco usa `immutable=1` | `tests/test_collector.py::test_immutable_read_creates_no_sidecar` |
 
 O modo `spool` exige que **você** registre um hook em `~/.hermes/config.yaml`. É opcional e o hook
 é um observador puro: não bloqueia chamadas, não modifica argumentos e não injeta contexto.
+
+> **Nuance do SQLite que vale saber.** Abrir um banco em modo WAL **somente leitura** faz a própria
+> biblioteca criar os arquivos sidecar `-shm`/`-wal` ao lado do `state.db`, porque ela precisa do
+> índice de memória compartilhada. Nenhum byte do banco é alterado, mas dois arquivos novos aparecem
+> no diretório do harness. Duas defesas: `hermes --version` roda com `HERMES_HOME` temporário (o CLI
+> grava cache onde for apontado), e a coleta aceita `--immutable`, que lê o arquivo como imutável sem
+> criar sidecar nenhum. Use `--immutable` quando o harness **não** estiver em execução; com o agente
+> escrevendo, a leitura imutável pode ficar desatualizada — e aí `mode=ro` é o certo.
 
 ## Detectores determinísticos × Qwen3‑0.6B
 

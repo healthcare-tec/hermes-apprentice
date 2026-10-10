@@ -19,6 +19,13 @@ artifacts/*.local.json
 .cache/
 models/
 
+# Artefatos de runtime do harness Hermes que não devem ser versionados.
+# O CLI grava cache em HERMES_HOME sempre que roda — por isso a sonda o executa
+# com um HERMES_HOME temporário, e por isso estes padrões existem aqui.
+.update_check
+*.db-wal
+*.db-shm
+
 # Editores / sistema
 .vscode/
 .idea/

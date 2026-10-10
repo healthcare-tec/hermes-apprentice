@@ -94,3 +94,5 @@ diferença. Os gráficos são PNGs gerados por matplotlib em `reports/assets/`.
 | regras antes do modelo | ir direto para o LLM | um achado precisa ser explicável e reprodutível para virar ação |
 | fixture gerado pelo Hermes real | esquema inventado | validar contra a realidade é o único teste que importa |
 | cenários com zona de correção | cenários só de falha | a pergunta útil não é "travou?", é "o que destravou?" |
+| `hermes --version` com `HERMES_HOME` temporário | apontar para o home real | o CLI grava cache no home apontado; isolar mantém a promessa de não deixar rastro |
+| leitura `immutable=1` opcional | usar `mode=ro` sempre | banco WAL em `mode=ro` faz o SQLite criar sidecars `-shm`/`-wal`; `immutable` evita, ao custo de exigir harness parado |
