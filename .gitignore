@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Artefatos locais de execução (os artefatos do relatório publicado são versionados
+# de propósito — ver `artifacts/` e `reports/` no README).
+artifacts/*.local.json
+*.local.ndjson
+
+# Pesos de modelo baixados
+.cache/
+models/
+
+# Editores / sistema
+.vscode/
+.idea/
+.DS_Store

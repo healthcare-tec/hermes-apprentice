@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "s2_budget_exhausted",
+  "title": "Orçamento de iterações esgotado com resultados idênticos",
+  "kind": "failure-scenario",
+  "hermes_failure_mode": "Repetição de comando com resultado invariável até o harness encerrar o turno por `max_iterations_reached(60/60)`.",
+  "description": "O agente roda o mesmo teste com sementes diferentes, mas a mensagem de falha é sempre a mesma. Sem leitura do erro completo, nenhuma ação muda o estado, e o turno termina sem resposta final.",
+  "reference": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration",
+  "expected_rules": [
+    "loop.no_progress",
+    "failure.budget_exhausted"
+  ],
+  "expected_verdict": "failure",
+  "correction": {
+    "strategy": "steer + leitura do erro completo",
+    "description": "Orientação para ler a mensagem de erro integral antes de repetir o comando; a causa real (`cliente_id` ausente) aparece e o teste passa."
+  },
+  "events_file": "events.ndjson",
+  "event_count": 59,
+  "window_size": 12,
+  "label_zones": [
+    {
+      "phase": "saudável",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 0,
+      "to_event": 18
+    },
+    {
+      "phase": "loop",
+      "label": "loop",
+      "loop_type": "no_progress",
+      "from_event": 19,
+      "to_event": 45
+    },
+    {
+      "phase": "correção",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 46,
+      "to_event": 58
+    }
+  ],
+  "zone_counts": {
+    "normal": 2,
+    "loop": 1
+  }
+}

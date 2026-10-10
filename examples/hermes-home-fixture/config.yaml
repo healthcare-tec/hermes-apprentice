@@ -1,0 +1,7 @@
+model: nous/qwen3-0.6b
+terminal:
+  backend: local
+tool_output:
+  max_bytes: 20000
+agent:
+  reasoning_effort: low

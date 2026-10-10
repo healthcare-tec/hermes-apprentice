@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "tool_version": "0.1.0",
+  "generated_at": "2026-10-10T01:38:43+00:00",
+  "host": {
+    "platform": "Linux-6.18.38+-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "machine": "x86_64",
+    "cwd": "/home/ubuntu/hermes-apprentice"
+  },
+  "hermes_home": {
+    "path": "examples/hermes-home-fixture",
+    "source": "explicit",
+    "exists": true,
+    "entries": {
+      "config.yaml": "file",
+      "SOUL.md": "file",
+      "logs": "dir",
+      "state.db": "file"
+    }
+  },
+  "installation": {
+    "cli": {
+      "binary": "/home/ubuntu/hermes-lab/venv/bin/hermes",
+      "available": true,
+      "invoked": true,
+      "version_raw": "Hermes Agent v0.19.0 (2026.7.20)\nInstall directory: /home/ubuntu/hermes-lab/venv/lib/python3.12/site-packages\nInstall method: pip\nPython: 3.12.3\nOpenAI SDK: 2.24.0\nUp to date",
+      "version_ok": true
+    },
+    "pip_metadata": {
+      "version": "0.19.0",
+      "location": "/home/ubuntu/hermes-lab/venv",
+      "source": "hermes_binary_environment"
+    }
+  },
+  "profiles": [],
+  "config": {
+    "path": "examples/hermes-home-fixture/config.yaml",
+    "exists": true,
+    "parser": "pyyaml",
+    "size_bytes": 113,
+    "sha256_prefix": "9532c588f3ce",
+    "top_level_keys": [
+      "agent",
+      "model",
+      "terminal",
+      "tool_output"
+    ],
+    "values": {
+      "model": "nous/qwen3-0.6b",
+      "terminal": {
+        "backend": "local"
+      },
+      "tool_output": {
+        "max_bytes": 20000
+      },
+      "agent": {
+        "reasoning_effort": "low"
+      }
+    },
+    "highlights": {
+      "model": "nous/qwen3-0.6b",
+      "provider": null,
+      "agent": {
+        "reasoning_effort": "low"
+      },
+      "tool_output": {
+        "max_bytes": 20000
+      },
+      "terminal_backend": "local"
+    }
+  },
+  "state_db": {
+    "path": "examples/hermes-home-fixture/state.db",
+    "exists": true,
+    "size_bytes": 196608,
+    "wal_present": true,
+    "tables": [
+      "async_delegations",
+      "compression_locks",
+      "gateway_routing",
+      "messages",
+      "messages_fts",
+      "messages_fts_config",
+      "messages_fts_content",
+      "messages_fts_data",
+      "messages_fts_docsize",
+      "messages_fts_idx",
+      "messages_fts_trigram",
+      "messages_fts_trigram_config",
+      "messages_fts_trigram_content",
+      "messages_fts_trigram_data",
+      "messages_fts_trigram_docsize",
+      "messages_fts_trigram_idx",
+      "schema_version",
+      "session_model_usage",
+      "sessions",
+      "sqlite_sequence",
+      "state_meta"
+    ],
+    "journal_mode": "wal",
+    "counts": {
+      "sessions": 1,
+      "messages": 11,
+      "session_model_usage": 0,
+      "schema_version": 1
+    },
+    "schema_version_row": [
+      22
+    ],
+    "read_only": true
+  },
+  "logs": {
+    "dir": "examples/hermes-home-fixture/logs",
+    "exists": true,
+    "files": [
+      {
+        "name": "logs/agent.log",
+        "size_bytes": 0,
+        "tail": ""
+      },
+      {
+        "name": "logs/errors.log",
+        "size_bytes": 0,
+        "tail": ""
+      }
+    ]
+  },
+  "secrets_present": {},
+  "upstream": {
+    "pypi": {
+      "latest": "0.19.0",
+      "requires_python": "<3.14,>=3.11",
+      "releases": 11
+    },
+    "github": {
+      "stars": 252296,
+      "license": "MIT",
+      "default_branch": "main",
+      "pushed_at": "2026-10-10T01:24:41Z"
+    },
+    "github_latest_release": {
+      "tag": "v0.21.6",
+      "published_at": "2026-10-08T11:51:57Z"
+    }
+  },
+  "notes": [
+    "Divergência de versões: pacote PyPI 0.19.0 x última release do GitHub v0.21.6."
+  ]
+}

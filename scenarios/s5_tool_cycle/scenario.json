@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "s5_tool_cycle",
+  "title": "Ciclo busca→extração sem convergência",
+  "kind": "failure-scenario",
+  "hermes_failure_mode": "Alternância `web_search` → `web_extract` com argumentos sempre diferentes: nenhuma repetição idêntica, mas nenhum progresso.",
+  "description": "Nove voltas do ciclo de duas ferramentas. Um detector de repetição exata não acusa nada — só um detector de ciclo captura o padrão. A resposta já existia no próprio repositório.",
+  "reference": "https://github.com/NousResearch/hermes-agent/issues?q=tool+loop",
+  "expected_rules": [
+    "loop.cycle"
+  ],
+  "expected_verdict": "loop",
+  "correction": {
+    "strategy": "steer + âncora no estado local",
+    "description": "Orientação para usar o que já foi lido no repositório; a resposta é produzida sem novas buscas."
+  },
+  "events_file": "events.ndjson",
+  "event_count": 81,
+  "window_size": 12,
+  "label_zones": [
+    {
+      "phase": "saudável",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 0,
+      "to_event": 17
+    },
+    {
+      "phase": "ciclo",
+      "label": "loop",
+      "loop_type": "cycle",
+      "from_event": 18,
+      "to_event": 66
+    },
+    {
+      "phase": "correção",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 67,
+      "to_event": 80
+    }
+  ],
+  "zone_counts": {
+    "normal": 2,
+    "loop": 1
+  }
+}

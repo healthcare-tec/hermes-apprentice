@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "s4_provider_retry_storm",
+  "title": "Tempestade de retries do provedor",
+  "kind": "failure-scenario",
+  "hermes_failure_mode": "Erros `api_request_error` 429/503 em rajada: o agente consome o orçamento tentando de novo em vez de trocar de rota.",
+  "description": "Sete tentativas consecutivas contra um provedor instável, sem backoff eficaz nem failover. A execução termina `failed` com resposta parcial, apesar de o trabalho ser recuperável.",
+  "reference": "https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks (hook `api_request_error`)",
+  "expected_rules": [
+    "failure.retry_storm",
+    "failure.run_not_completed"
+  ],
+  "expected_verdict": "failure",
+  "correction": {
+    "strategy": "steer + failover de provedor",
+    "description": "Orientação para trocar de provedor e limitar retries; a execução é retomada e concluída."
+  },
+  "events_file": "events.ndjson",
+  "event_count": 58,
+  "window_size": 12,
+  "label_zones": [
+    {
+      "phase": "saudável",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 0,
+      "to_event": 17
+    },
+    {
+      "phase": "falha",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "from_event": 18,
+      "to_event": 43
+    },
+    {
+      "phase": "correção",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 44,
+      "to_event": 57
+    }
+  ],
+  "zone_counts": {
+    "normal": 2,
+    "failure": 1
+  }
+}

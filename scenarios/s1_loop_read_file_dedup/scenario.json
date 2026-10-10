@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "s1_loop_read_file_dedup",
+  "title": "Loop de read_file com stub de deduplicação",
+  "kind": "failure-scenario",
+  "hermes_failure_mode": "Releitura infinita do mesmo arquivo: o harness devolve um stub de deduplicação e o modelo interpreta como resultado novo.",
+  "description": "Após uma edição bem-sucedida, o agente volta a chamar `read_file` com os mesmos argumentos. O resultado é sempre o mesmo *stub* de deduplicação. Sem detectar a repetição, o agente gasta o orçamento de turno relendo o mesmo conteúdo.",
+  "reference": "https://github.com/NousResearch/hermes-agent/issues/15759",
+  "expected_rules": [
+    "loop.repetition",
+    "loop.no_progress"
+  ],
+  "expected_verdict": "loop",
+  "correction": {
+    "strategy": "steer",
+    "description": "Injeção de orientação (`/steer`) proibindo a releitura e sugerindo leitura paginada com `offset`."
+  },
+  "events_file": "events.ndjson",
+  "event_count": 57,
+  "window_size": 12,
+  "label_zones": [
+    {
+      "phase": "saudável",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 0,
+      "to_event": 17
+    },
+    {
+      "phase": "loop",
+      "label": "loop",
+      "loop_type": "repetition",
+      "from_event": 18,
+      "to_event": 42
+    },
+    {
+      "phase": "correção",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 43,
+      "to_event": 56
+    }
+  ],
+  "zone_counts": {
+    "normal": 2,
+    "loop": 1
+  }
+}

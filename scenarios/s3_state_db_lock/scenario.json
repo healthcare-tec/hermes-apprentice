@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "s3_state_db_lock",
+  "title": "Lock de escrita no state.db durante gravação de transcript",
+  "kind": "failure-scenario",
+  "hermes_failure_mode": "`session_persistence_failed:locked` aborta o turno quando gateway, CLI e subagente disputam a escrita do WAL.",
+  "description": "Quatro tentativas de gravar o transcript falham com `database is locked`. O turno é abortado com erro, apesar de o trabalho do modelo ter sido concluído. A recuperação exige identificar o processo que detém o lock — não repetir a escrita.",
+  "reference": "https://hermes-agent.nousresearch.com/docs/developer-guide/session-storage",
+  "expected_rules": [
+    "failure.persistence_locked",
+    "failure.retry_storm"
+  ],
+  "expected_verdict": "failure",
+  "correction": {
+    "strategy": "interrupção + diagnóstico de lock",
+    "description": "`hermes_state_lockowners` identifica o processo concorrente; a sessão é retomada após a liberação do lock."
+  },
+  "events_file": "events.ndjson",
+  "event_count": 59,
+  "window_size": 12,
+  "label_zones": [
+    {
+      "phase": "saudável",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 0,
+      "to_event": 17
+    },
+    {
+      "phase": "falha",
+      "label": "failure",
+      "loop_type": "persistence_locked",
+      "from_event": 18,
+      "to_event": 43
+    },
+    {
+      "phase": "correção",
+      "label": "normal",
+      "loop_type": "none",
+      "from_event": 44,
+      "to_event": 58
+    }
+  ],
+  "zone_counts": {
+    "normal": 2,
+    "failure": 1
+  }
+}

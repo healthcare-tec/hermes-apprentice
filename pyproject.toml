@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-apprentice"
+version = "0.1.0"
+description = "Aprendiz de observação para o harness Hermes Agent: coleta somente leitura, detecção de padrões e loops, e avaliação com modelo local."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Healthcare Technologies", email = "1.99519685+healthcare-tec@users.noreply.github.com" }]
+keywords = ["hermes", "agent", "observability", "loop-detection", "llm", "qwen"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Quality Assurance",
+  "Intended Audience :: Developers",
+]
+dependencies = []
+
+[project.optional-dependencies]
+# Gráficos do relatório.
+report = ["matplotlib>=3.7"]
+# Bancada do modelo local (Qwen3-0.6B).
+model = ["torch>=2.2", "transformers>=4.55", "accelerate>=0.30", "safetensors>=0.4"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[project.scripts]
+hermes-apprentice = "hermes_apprentice.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/healthcare-tec/hermes-apprentice"
+Issues = "https://github.com/healthcare-tec/hermes-apprentice/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

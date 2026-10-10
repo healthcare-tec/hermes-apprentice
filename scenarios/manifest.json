@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-10T01:29:26+00:00",
+  "scenario_count": 5,
+  "window_size": 12,
+  "scenarios": [
+    {
+      "schema_version": 1,
+      "id": "s1_loop_read_file_dedup",
+      "title": "Loop de read_file com stub de deduplicação",
+      "kind": "failure-scenario",
+      "hermes_failure_mode": "Releitura infinita do mesmo arquivo: o harness devolve um stub de deduplicação e o modelo interpreta como resultado novo.",
+      "description": "Após uma edição bem-sucedida, o agente volta a chamar `read_file` com os mesmos argumentos. O resultado é sempre o mesmo *stub* de deduplicação. Sem detectar a repetição, o agente gasta o orçamento de turno relendo o mesmo conteúdo.",
+      "reference": "https://github.com/NousResearch/hermes-agent/issues/15759",
+      "expected_rules": [
+        "loop.repetition",
+        "loop.no_progress"
+      ],
+      "expected_verdict": "loop",
+      "correction": {
+        "strategy": "steer",
+        "description": "Injeção de orientação (`/steer`) proibindo a releitura e sugerindo leitura paginada com `offset`."
+      },
+      "events_file": "events.ndjson",
+      "event_count": 57,
+      "window_size": 12,
+      "label_zones": [
+        {
+          "phase": "saudável",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 0,
+          "to_event": 17
+        },
+        {
+          "phase": "loop",
+          "label": "loop",
+          "loop_type": "repetition",
+          "from_event": 18,
+          "to_event": 42
+        },
+        {
+          "phase": "correção",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 43,
+          "to_event": 56
+        }
+      ],
+      "zone_counts": {
+        "normal": 2,
+        "loop": 1
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "s2_budget_exhausted",
+      "title": "Orçamento de iterações esgotado com resultados idênticos",
+      "kind": "failure-scenario",
+      "hermes_failure_mode": "Repetição de comando com resultado invariável até o harness encerrar o turno por `max_iterations_reached(60/60)`.",
+      "description": "O agente roda o mesmo teste com sementes diferentes, mas a mensagem de falha é sempre a mesma. Sem leitura do erro completo, nenhuma ação muda o estado, e o turno termina sem resposta final.",
+      "reference": "https://hermes-agent.nousresearch.com/docs/developer-guide/programmatic-integration",
+      "expected_rules": [
+        "loop.no_progress",
+        "failure.budget_exhausted"
+      ],
+      "expected_verdict": "failure",
+      "correction": {
+        "strategy": "steer + leitura do erro completo",
+        "description": "Orientação para ler a mensagem de erro integral antes de repetir o comando; a causa real (`cliente_id` ausente) aparece e o teste passa."
+      },
+      "events_file": "events.ndjson",
+      "event_count": 59,
+      "window_size": 12,
+      "label_zones": [
+        {
+          "phase": "saudável",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 0,
+          "to_event": 18
+        },
+        {
+          "phase": "loop",
+          "label": "loop",
+          "loop_type": "no_progress",
+          "from_event": 19,
+          "to_event": 45
+        },
+        {
+          "phase": "correção",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 46,
+          "to_event": 58
+        }
+      ],
+      "zone_counts": {
+        "normal": 2,
+        "loop": 1
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "s3_state_db_lock",
+      "title": "Lock de escrita no state.db durante gravação de transcript",
+      "kind": "failure-scenario",
+      "hermes_failure_mode": "`session_persistence_failed:locked` aborta o turno quando gateway, CLI e subagente disputam a escrita do WAL.",
+      "description": "Quatro tentativas de gravar o transcript falham com `database is locked`. O turno é abortado com erro, apesar de o trabalho do modelo ter sido concluído. A recuperação exige identificar o processo que detém o lock — não repetir a escrita.",
+      "reference": "https://hermes-agent.nousresearch.com/docs/developer-guide/session-storage",
+      "expected_rules": [
+        "failure.persistence_locked",
+        "failure.retry_storm"
+      ],
+      "expected_verdict": "failure",
+      "correction": {
+        "strategy": "interrupção + diagnóstico de lock",
+        "description": "`hermes_state_lockowners` identifica o processo concorrente; a sessão é retomada após a liberação do lock."
+      },
+      "events_file": "events.ndjson",
+      "event_count": 59,
+      "window_size": 12,
+      "label_zones": [
+        {
+          "phase": "saudável",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 0,
+          "to_event": 17
+        },
+        {
+          "phase": "falha",
+          "label": "failure",
+          "loop_type": "persistence_locked",
+          "from_event": 18,
+          "to_event": 43
+        },
+        {
+          "phase": "correção",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 44,
+          "to_event": 58
+        }
+      ],
+      "zone_counts": {
+        "normal": 2,
+        "failure": 1
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "s4_provider_retry_storm",
+      "title": "Tempestade de retries do provedor",
+      "kind": "failure-scenario",
+      "hermes_failure_mode": "Erros `api_request_error` 429/503 em rajada: o agente consome o orçamento tentando de novo em vez de trocar de rota.",
+      "description": "Sete tentativas consecutivas contra um provedor instável, sem backoff eficaz nem failover. A execução termina `failed` com resposta parcial, apesar de o trabalho ser recuperável.",
+      "reference": "https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks (hook `api_request_error`)",
+      "expected_rules": [
+        "failure.retry_storm",
+        "failure.run_not_completed"
+      ],
+      "expected_verdict": "failure",
+      "correction": {
+        "strategy": "steer + failover de provedor",
+        "description": "Orientação para trocar de provedor e limitar retries; a execução é retomada e concluída."
+      },
+      "events_file": "events.ndjson",
+      "event_count": 58,
+      "window_size": 12,
+      "label_zones": [
+        {
+          "phase": "saudável",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 0,
+          "to_event": 17
+        },
+        {
+          "phase": "falha",
+          "label": "failure",
+          "loop_type": "retry_storm",
+          "from_event": 18,
+          "to_event": 43
+        },
+        {
+          "phase": "correção",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 44,
+          "to_event": 57
+        }
+      ],
+      "zone_counts": {
+        "normal": 2,
+        "failure": 1
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "s5_tool_cycle",
+      "title": "Ciclo busca→extração sem convergência",
+      "kind": "failure-scenario",
+      "hermes_failure_mode": "Alternância `web_search` → `web_extract` com argumentos sempre diferentes: nenhuma repetição idêntica, mas nenhum progresso.",
+      "description": "Nove voltas do ciclo de duas ferramentas. Um detector de repetição exata não acusa nada — só um detector de ciclo captura o padrão. A resposta já existia no próprio repositório.",
+      "reference": "https://github.com/NousResearch/hermes-agent/issues?q=tool+loop",
+      "expected_rules": [
+        "loop.cycle"
+      ],
+      "expected_verdict": "loop",
+      "correction": {
+        "strategy": "steer + âncora no estado local",
+        "description": "Orientação para usar o que já foi lido no repositório; a resposta é produzida sem novas buscas."
+      },
+      "events_file": "events.ndjson",
+      "event_count": 81,
+      "window_size": 12,
+      "label_zones": [
+        {
+          "phase": "saudável",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 0,
+          "to_event": 17
+        },
+        {
+          "phase": "ciclo",
+          "label": "loop",
+          "loop_type": "cycle",
+          "from_event": 18,
+          "to_event": 66
+        },
+        {
+          "phase": "correção",
+          "label": "normal",
+          "loop_type": "none",
+          "from_event": 67,
+          "to_event": 80
+        }
+      ],
+      "zone_counts": {
+        "normal": 2,
+        "loop": 1
+      }
+    }
+  ]
+}

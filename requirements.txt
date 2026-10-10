@@ -1,0 +1,15 @@
+# Núcleo (sonda, coletor, detectores, relatório): nenhuma dependência externa.
+#
+# Extras opcionais:
+#   pip install -e ".[report]"   # gráficos do relatório (matplotlib)
+#   pip install -e ".[model]"    # bancada do modelo local (torch + transformers)
+#   pip install -e ".[dev]"      # testes
+#
+# Para rodar tudo de uma vez:
+#   pip install -e ".[report,model,dev]"
+matplotlib>=3.7
+torch>=2.2
+transformers>=4.55
+accelerate>=0.30
+safetensors>=0.4
+pytest>=8.0

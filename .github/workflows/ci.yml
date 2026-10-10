@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  testes:
+    name: Testes (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Instalar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[report,dev]"
+      - name: Testes
+        run: pytest -q
+
+  cenarios-reproduziveis:
+    name: Cenários são determinísticos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Regenerar e comparar com o que está versionado
+        run: python scripts/check_scenarios_reproducible.py --scenarios scenarios
+
+  relatorio:
+    name: Relatório renderiza sem o modelo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[report,dev]"
+      - name: Sonda (offline) + detecção + relatório
+        run: |
+          python -m hermes_apprentice probe --hermes-home examples/hermes-home-fixture \
+              --no-cli --offline --out artifacts/hermes-environment.ci.json
+          python -m hermes_apprentice detect --input examples/hermes-home-fixture \
+              --out artifacts/deteccao.ci.json || true
+          python -m hermes_apprentice detect --input scenarios --out artifacts/deteccao.json
+          python -m hermes_apprentice report \
+              --probe artifacts/hermes-environment.ci.json \
+              --detection artifacts/deteccao.json \
+              --benchmark artifacts/benchmark-qwen3-0.6b.json \
+              --out /tmp/relatorio-ci.md
+          test -s /tmp/relatorio-ci.md

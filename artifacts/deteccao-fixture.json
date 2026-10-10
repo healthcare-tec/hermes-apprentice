@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "total_findings": 1,
+    "loops": 1,
+    "failures": 0,
+    "rules": {
+      "loop.repetition": 1
+    },
+    "sessions_analyzed": 1,
+    "worst_severity": "medium"
+  },
+  "sessions": {
+    "sess_fixture_collector": {
+      "findings": [
+        {
+          "rule": "loop.repetition",
+          "category": "loop",
+          "severity": "medium",
+          "message": "A ferramenta `read_file` foi chamada 3 vezes com argumentos idênticos na sessão sess_fixture_collector sem mudança de estado.",
+          "session_id": "sess_fixture_collector",
+          "start_ts": "2026-10-10T01:34:17.070Z",
+          "end_ts": "2026-10-10T01:34:17.074Z",
+          "evidence": [
+            3,
+            10,
+            13
+          ],
+          "detail": {
+            "tool": "read_file",
+            "signature": "read_file:3741997400057110",
+            "occurrences": 3,
+            "span_seconds": 0.004,
+            "threshold": 3,
+            "args_preview": "{\"path\": \"docs/manual.md\", \"limit\": 200}"
+          }
+        }
+      ],
+      "verdict": "loop",
+      "rules": [
+        "loop.repetition"
+      ]
+    }
+  },
+  "stats": {
+    "events_analyzed": 17,
+    "tool_calls": 4,
+    "config": {
+      "repetition_min": 3,
+      "no_progress_min": 3,
+      "cycle_max_period": 4,
+      "cycle_min_repeats": 3,
+      "retry_storm_min": 3,
+      "burst_window_s": 120.0,
+      "dedup_stub_min": 2
+    }
+  },
+  "findings": [
+    {
+      "rule": "loop.repetition",
+      "category": "loop",
+      "severity": "medium",
+      "message": "A ferramenta `read_file` foi chamada 3 vezes com argumentos idênticos na sessão sess_fixture_collector sem mudança de estado.",
+      "session_id": "sess_fixture_collector",
+      "start_ts": "2026-10-10T01:34:17.070Z",
+      "end_ts": "2026-10-10T01:34:17.074Z",
+      "evidence": [
+        3,
+        10,
+        13
+      ],
+      "detail": {
+        "tool": "read_file",
+        "signature": "read_file:3741997400057110",
+        "occurrences": 3,
+        "span_seconds": 0.004,
+        "threshold": 3,
+        "args_preview": "{\"path\": \"docs/manual.md\", \"limit\": 200}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1463 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen/Qwen3-0.6B",
+  "dataset": {
+    "total_windows": 30,
+    "by_label": {
+      "failure": 6,
+      "loop": 9,
+      "normal": 15
+    },
+    "by_scenario": {
+      "s1_loop_read_file_dedup": 6,
+      "s2_budget_exhausted": 6,
+      "s3_state_db_lock": 6,
+      "s4_provider_retry_storm": 6,
+      "s5_tool_cycle": 6
+    },
+    "window_size": 12,
+    "stride": 6,
+    "max_windows_per_zone": 3
+  },
+  "hardware": {
+    "platform": "Linux-6.18.38+-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "python": "3.12.3",
+    "cpu_cores": 6,
+    "ram_gb": 23.85,
+    "device": "cpu",
+    "dtype": "float32",
+    "gpu": false,
+    "load_seconds": 5.7
+  },
+  "baseline": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "per_class": {
+      "normal": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 15
+      },
+      "loop": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 9
+      },
+      "failure": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 6
+      }
+    },
+    "confusion_matrix": [
+      [
+        15,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        0
+      ],
+      [
+        0,
+        0,
+        6
+      ]
+    ],
+    "labels": [
+      "normal",
+      "loop",
+      "failure"
+    ],
+    "n": 30,
+    "rule_hits": {
+      "loop.no_progress": 6,
+      "failure.retry_storm": 6,
+      "loop.repetition": 3,
+      "failure.persistence_locked": 3,
+      "loop.cycle": 3
+    },
+    "latency_s": {
+      "mean": 7e-05,
+      "total": 0.0022
+    }
+  },
+  "model": {
+    "accuracy": 0.7,
+    "macro_f1": 0.552,
+    "per_class": {
+      "normal": {
+        "precision": 0.667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 8
+      },
+      "loop": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 6
+      },
+      "failure": {
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1": 0.857,
+        "support": 6
+      }
+    },
+    "confusion_matrix": [
+      [
+        8,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        6
+      ]
+    ],
+    "labels": [
+      "normal",
+      "loop",
+      "failure"
+    ],
+    "n": 20,
+    "parse_failures": 10,
+    "latency_s": {
+      "mean": 8.532,
+      "median": 8.495,
+      "p95": 9.696,
+      "max": 10.08,
+      "total": 255.95
+    },
+    "throughput_tokens_per_second": {
+      "mean": 5.3,
+      "min": 4.7,
+      "max": 6.2
+    },
+    "prompt_tokens_mean": 521.1
+  },
+  "model_windows": [
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 8.023,
+      "prompt_tokens": 495,
+      "generated_tokens": 44,
+      "tokens_per_second": 5.5,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with multiple tool calls and successful results, indicating a healthy run.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 8.3,
+      "prompt_tokens": 537,
+      "generated_tokens": 43,
+      "tokens_per_second": 5.2,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with multiple tool calls and results, showing a healthy run.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "normal",
+      "loop_type": "repetition",
+      "confidence": 0.0,
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "latency_s": 9.637,
+      "prompt_tokens": 623,
+      "generated_tokens": 45,
+      "tokens_per_second": 4.7,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"repetition\", \"confidence\": 0.0, \"reason\": \"The agent reads the same file multiple times with no change in content, indicating repetition.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "normal",
+      "loop_type": "repetition",
+      "confidence": 0.0,
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "latency_s": 9.062,
+      "prompt_tokens": 623,
+      "generated_tokens": 45,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"repetition\", \"confidence\": 0.0, \"reason\": \"The agent reads the same file multiple times with no change in content, indicating repetition.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "normal",
+      "loop_type": "repetition",
+      "confidence": 0.0,
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "latency_s": 8.534,
+      "prompt_tokens": 623,
+      "generated_tokens": 45,
+      "tokens_per_second": 5.3,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"repetition\", \"confidence\": 0.0, \"reason\": \"The agent reads the same file multiple times with no change in content, indicating repetition.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 5,
+        "start": 43,
+        "end": 54,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress with repeated actions and successful results.",
+      "latency_s": 7.842,
+      "prompt_tokens": 485,
+      "generated_tokens": 39,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with repeated actions and successful results.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress with a normal workflow, showing no repetition or failure patterns.",
+      "latency_s": 8.773,
+      "prompt_tokens": 508,
+      "generated_tokens": 44,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with a normal workflow, showing no repetition or failure patterns.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 9.096,
+      "prompt_tokens": 529,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.3,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent made progress with tool calls and results, but there was an error in the terminal response indicating a failure.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 2,
+        "start": 19,
+        "end": 30,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "failure",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.",
+      "latency_s": 9.656,
+      "prompt_tokens": 615,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"failure\", \"confidence\": 0.0, \"reason\": \"The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 3,
+        "start": 25,
+        "end": 36,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 8.988,
+      "prompt_tokens": 614,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.3,
+      "parse_ok": false,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"The agent repeatedly calls the same tool with the same result, causing a failure due to retries and repeated errors"
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 4,
+        "start": 31,
+        "end": 42,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "failure",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.",
+      "latency_s": 8.903,
+      "prompt_tokens": 617,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.4,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"failure\", \"confidence\": 0.0, \"reason\": \"The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 5,
+        "start": 46,
+        "end": 57,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent performed a successful test with 15 passes, indicating a healthy run.",
+      "latency_s": 8.018,
+      "prompt_tokens": 510,
+      "generated_tokens": 44,
+      "tokens_per_second": 5.5,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent performed a successful test with 15 passes, indicating a healthy run.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 7.524,
+      "prompt_tokens": 487,
+      "generated_tokens": 43,
+      "tokens_per_second": 5.7,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with different tool calls and results, showing a healthy run.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress with multiple tool calls and results, leading to a consolidated summary.",
+      "latency_s": 8.065,
+      "prompt_tokens": 516,
+      "generated_tokens": 45,
+      "tokens_per_second": 5.6,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with multiple tool calls and results, leading to a consolidated summary.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "The window shows repeated persistence failures with retryable errors, indicating a retry storm.",
+      "latency_s": 7.248,
+      "prompt_tokens": 371,
+      "generated_tokens": 45,
+      "tokens_per_second": 6.2,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"The window shows repeated persistence failures with retryable errors, indicating a retry storm.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "The window shows repeated persistence failures with retryable errors, indicating a retry storm.",
+      "latency_s": 7.548,
+      "prompt_tokens": 371,
+      "generated_tokens": 45,
+      "tokens_per_second": 6.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"The window shows repeated persistence failures with retryable errors, indicating a retry storm.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "The window shows repeated persistence failures with retryable errors, indicating a retry storm.",
+      "latency_s": 8.115,
+      "prompt_tokens": 371,
+      "generated_tokens": 45,
+      "tokens_per_second": 5.5,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"The window shows repeated persistence failures with retryable errors, indicating a retry storm.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 5,
+        "start": 44,
+        "end": 55,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent successfully resumed work after a lock was released, indicating a normal process with no repetition or failure.",
+      "latency_s": 9.317,
+      "prompt_tokens": 557,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.2,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent successfully resumed work after a lock was released, indicating a normal process with no repetition or failure.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress through multiple tool calls and results, with no repetition or loop.",
+      "latency_s": 8.457,
+      "prompt_tokens": 505,
+      "generated_tokens": 45,
+      "tokens_per_second": 5.3,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress through multiple tool calls and results, with no repetition or loop.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 8.434,
+      "prompt_tokens": 532,
+      "generated_tokens": 44,
+      "tokens_per_second": 5.2,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The window shows a series of tool calls with varied results, indicating progress toward a solution.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "multiple api errors recurring with provider rate limits",
+      "latency_s": 6.837,
+      "prompt_tokens": 383,
+      "generated_tokens": 37,
+      "tokens_per_second": 5.4,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"multiple api errors recurring with provider rate limits\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "Multiple API errors and repeated provider rate limit errors indicate a retry storm.",
+      "latency_s": 7.419,
+      "prompt_tokens": 395,
+      "generated_tokens": 43,
+      "tokens_per_second": 5.8,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"Multiple API errors and repeated provider rate limit errors indicate a retry storm.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "truth": "failure",
+      "label": "failure",
+      "loop_type": "retry_storm",
+      "confidence": 0.0,
+      "reason": "Multiple API errors recurring with provider rate limits, indicating a retry storm.",
+      "latency_s": 7.188,
+      "prompt_tokens": 395,
+      "generated_tokens": 43,
+      "tokens_per_second": 6.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"failure\", \"loop_type\": \"retry_storm\", \"confidence\": 0.0, \"reason\": \"Multiple API errors recurring with provider rate limits, indicating a retry storm.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 5,
+        "start": 44,
+        "end": 55,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 9.191,
+      "prompt_tokens": 523,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.2,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent performed web searches, read files, and extracted data, leading to a successful configuration of failover and retry"
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 8.347,
+      "prompt_tokens": 520,
+      "generated_tokens": 43,
+      "tokens_per_second": 5.2,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with different tool calls and results, indicating a healthy run.\""
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress with different tool calls and results, indicating a healthy run.",
+      "latency_s": 8.888,
+      "prompt_tokens": 549,
+      "generated_tokens": 44,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with different tool calls and results, indicating a healthy run.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 9.696,
+      "prompt_tokens": 629,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.0,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is performing web searches and extracting content from multiple pages, with no repetition or loop, and no external failure"
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is performing web extraction and search tasks repeatedly without changing the world, with no convergence or failure.",
+      "latency_s": 9.553,
+      "prompt_tokens": 629,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.0,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is performing web extraction and search tasks repeatedly without changing the world, with no convergence or failure.\"}"
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "truth": "loop",
+      "label": "unknown",
+      "loop_type": "none",
+      "confidence": null,
+      "reason": "",
+      "latency_s": 10.08,
+      "prompt_tokens": 627,
+      "generated_tokens": 48,
+      "tokens_per_second": 4.8,
+      "parse_ok": false,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is performing web searches and extracting content repeatedly without changing the world, with no convergence or repetition in tool calls"
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 5,
+        "start": 67,
+        "end": 78,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "truth": "normal",
+      "label": "normal",
+      "loop_type": "none",
+      "confidence": 0.0,
+      "reason": "The agent is making progress with read_file and terminal actions, and the results are consistent with the code provided.",
+      "latency_s": 9.212,
+      "prompt_tokens": 495,
+      "generated_tokens": 48,
+      "tokens_per_second": 5.2,
+      "parse_ok": true,
+      "raw": "{\"label\": \"normal\", \"loop_type\": \"none\", \"confidence\": 0.0, \"reason\": \"The agent is making progress with read_file and terminal actions, and the results are consistent with the code provided.\"}"
+    }
+  ],
+  "baseline_windows": [
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 8e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 5e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.repetition",
+        "loop.no_progress"
+      ],
+      "latency_s": 0.00012
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.repetition",
+        "loop.no_progress"
+      ],
+      "latency_s": 8e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "loop",
+        "loop_type": "repetition",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.repetition",
+        "loop.no_progress"
+      ],
+      "latency_s": 7e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s1_loop_read_file_dedup",
+        "index": 5,
+        "start": 43,
+        "end": 54,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 9e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 7e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 2,
+        "start": 19,
+        "end": 30,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.no_progress"
+      ],
+      "latency_s": 9e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 3,
+        "start": 25,
+        "end": 36,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.no_progress"
+      ],
+      "latency_s": 0.0001
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 4,
+        "start": 31,
+        "end": 42,
+        "label": "loop",
+        "loop_type": "no_progress",
+        "phase": "loop",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.no_progress"
+      ],
+      "latency_s": 8e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s2_budget_exhausted",
+        "index": 5,
+        "start": 46,
+        "end": 57,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 4e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 5e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 4e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.persistence_locked",
+        "failure.retry_storm"
+      ],
+      "latency_s": 0.00011
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.persistence_locked",
+        "failure.retry_storm"
+      ],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "failure",
+        "loop_type": "persistence_locked",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.persistence_locked",
+        "failure.retry_storm"
+      ],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s3_state_db_lock",
+        "index": 5,
+        "start": 44,
+        "end": 55,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 4e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 4e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 4e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.retry_storm"
+      ],
+      "latency_s": 9e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.retry_storm"
+      ],
+      "latency_s": 9e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "failure",
+        "loop_type": "retry_storm",
+        "phase": "falha",
+        "size": 12
+      },
+      "predicted": "failure",
+      "truth": "failure",
+      "rules": [
+        "failure.retry_storm"
+      ],
+      "latency_s": 8e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s4_provider_retry_storm",
+        "index": 5,
+        "start": 44,
+        "end": 55,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 0,
+        "start": 0,
+        "end": 11,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 1,
+        "start": 6,
+        "end": 17,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "saudável",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 6e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 2,
+        "start": 18,
+        "end": 29,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.cycle"
+      ],
+      "latency_s": 0.0001
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 3,
+        "start": 24,
+        "end": 35,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.cycle"
+      ],
+      "latency_s": 0.0001
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 4,
+        "start": 30,
+        "end": 41,
+        "label": "loop",
+        "loop_type": "cycle",
+        "phase": "ciclo",
+        "size": 12
+      },
+      "predicted": "loop",
+      "truth": "loop",
+      "rules": [
+        "loop.cycle"
+      ],
+      "latency_s": 9e-05
+    },
+    {
+      "window": {
+        "scenario_id": "s5_tool_cycle",
+        "index": 5,
+        "start": 67,
+        "end": 78,
+        "label": "normal",
+        "loop_type": "none",
+        "phase": "correção",
+        "size": 12
+      },
+      "predicted": "normal",
+      "truth": "normal",
+      "rules": [],
+      "latency_s": 6e-05
+    }
+  ],
+  "errors": [
+    {
+      "scenario_id": "s1_loop_read_file_dedup",
+      "truth": "loop",
+      "predicted": "normal",
+      "loop_type": "repetition",
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s1_loop_read_file_dedup",
+      "truth": "loop",
+      "predicted": "normal",
+      "loop_type": "repetition",
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s1_loop_read_file_dedup",
+      "truth": "loop",
+      "predicted": "normal",
+      "loop_type": "repetition",
+      "reason": "The agent reads the same file multiple times with no change in content, indicating repetition.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s2_budget_exhausted",
+      "truth": "loop",
+      "predicted": "failure",
+      "loop_type": "none",
+      "reason": "The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s2_budget_exhausted",
+      "truth": "loop",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    },
+    {
+      "scenario_id": "s2_budget_exhausted",
+      "truth": "loop",
+      "predicted": "failure",
+      "loop_type": "none",
+      "reason": "The agent repeatedly calls the same tool with the same result, leading to a failure to resolve the issue.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s5_tool_cycle",
+      "truth": "loop",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    },
+    {
+      "scenario_id": "s5_tool_cycle",
+      "truth": "loop",
+      "predicted": "normal",
+      "loop_type": "none",
+      "reason": "The agent is performing web extraction and search tasks repeatedly without changing the world, with no convergence or failure.",
+      "parse_ok": true
+    },
+    {
+      "scenario_id": "s5_tool_cycle",
+      "truth": "loop",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    },
+    {
+      "scenario_id": "s1_loop_read_file_dedup",
+      "truth": "normal",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    },
+    {
+      "scenario_id": "s1_loop_read_file_dedup",
+      "truth": "normal",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    },
+    {
+      "scenario_id": "s2_budget_exhausted",
+      "truth": "normal",
+      "predicted": "unknown",
+      "loop_type": "none",
+      "reason": "",
+      "parse_ok": false
+    }
+  ],
+  "timing": {
+    "total_seconds": 256.07
+  }
+}
